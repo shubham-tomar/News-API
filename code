@@ -1,0 +1,32 @@
+import requests
+import pandas as pd
+import pymongo
+
+connection = pymongo.MongoClient()
+db1 = connection['GoggleNews']
+db1collection = db1["News"]
+
+url = ('https://newsapi.org/v2/everything?'
+       'q=Bitcoin&'
+       'from=2020-02-11&'
+       'sourse=Coindesk.com'
+       'to=2020-02-12'
+       'sortBy=popularity&'
+       'pageSize=100&'
+       'language=en&'
+       'apiKey=e36f053ff1924d10920ec16e4ebb9ca0')
+
+response = requests.get(url)
+l = response.json()
+data = []
+
+for i in range(len(l['articles'])):
+    data.append([l['articles'][i]['source']['name'],l['articles'][i]['publishedAt'],l['articles'][i]['title'],
+                 l['articles'][i]['content']])
+
+mainDF = pd.DataFrame(data=data,columns=['Source','Published At','Title','Content'])
+print(mainDF)
+data_to_insert = mainDF.to_dict("records")
+db1collection.insert_many(data_to_insert)
+
+connection.close()
